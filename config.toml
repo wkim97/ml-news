@@ -1,0 +1,124 @@
+# ml-news configuration (shared, committed). Secrets live in .env, never here.
+
+[profile]
+# Who the digest is for. The curator uses this to decide what is "hot" and what it means.
+description = """
+PhD researcher in AI/ML, with focus on computer vision and NLP.
+Wants: frontier model releases (closed & open weights), major new architectures / training methods,
+influential papers (esp. CV, multimodal, LLM, generative models), important open-source tools/datasets,
+and big industry moves that change the research landscape.
+Does NOT want: funding rounds, product marketing fluff, opinion pieces, tutorials, AI-policy chatter
+(unless it materially affects research), minor version bumps, quantized re-uploads, crypto/AI hype.
+"""
+language = "Korean"          # language of the digest text (titles/links stay original)
+
+[digest]
+lookback_hours = 36          # candidate window when there is no previous successful run
+max_items = 10               # hard cap on main items (radar excluded)
+max_radar = 6                # one-liners for "worth a glance"
+subject_prefix = "[ML News]"
+
+[curate]
+model = ""                   # empty = claude CLI default; e.g. "claude-opus-5-5"
+timeout_sec = 1200
+allow_web = true             # let the curator WebSearch/WebFetch to verify & catch missed big news
+
+# ---- Sources -------------------------------------------------------------
+# kind: lab | newsletter | community  (hint for the curator about signal type)
+
+[[rss]]
+name = "OpenAI"
+url = "https://openai.com/news/rss.xml"
+kind = "lab"
+
+[[rss]]
+name = "Anthropic"
+url = "https://raw.githubusercontent.com/Olshansk/rss-feeds/main/feeds/feed_anthropic_news.xml"
+kind = "lab"
+
+[[rss]]
+name = "Google DeepMind"
+url = "https://deepmind.google/blog/rss.xml"
+kind = "lab"
+
+[[rss]]
+name = "Google Research"
+url = "https://research.google/blog/rss/"
+kind = "lab"
+
+[[rss]]
+name = "Meta AI"
+url = "https://raw.githubusercontent.com/Olshansk/rss-feeds/main/feeds/feed_meta_ai.xml"
+kind = "lab"
+
+[[rss]]
+name = "Qwen"
+url = "https://qwenlm.github.io/blog/index.xml"
+kind = "lab"
+
+[[rss]]
+name = "Hugging Face Blog"
+url = "https://huggingface.co/blog/feed.xml"
+kind = "lab"
+
+[[rss]]
+name = "AI News (smol.ai)"   # daily recap of X/Twitter + Reddit + Discord — our proxy for X
+url = "https://news.smol.ai/rss.xml"
+kind = "newsletter"
+content_chars = 6000
+
+[[rss]]
+name = "Simon Willison"
+url = "https://simonwillison.net/atom/everything/"
+kind = "newsletter"
+
+[[rss]]
+name = "Import AI"
+url = "https://importai.substack.com/feed"
+kind = "newsletter"
+
+[[rss]]
+name = "Latent Space"
+url = "https://www.latent.space/feed"
+kind = "newsletter"
+
+[[rss]]
+name = "Ahead of AI (Raschka)"
+url = "https://magazine.sebastianraschka.com/feed"
+kind = "newsletter"
+
+[[rss]]
+name = "The Decoder"
+url = "https://the-decoder.com/feed/"
+kind = "newsletter"
+
+[[rss]]
+name = "r/LocalLLaMA"
+url = "https://www.reddit.com/r/LocalLLaMA/top/.rss?t=day"
+kind = "community"
+max_items = 15
+
+[[rss]]
+name = "r/MachineLearning"
+url = "https://www.reddit.com/r/MachineLearning/top/.rss?t=day"
+kind = "community"
+max_items = 10
+
+[hackernews]
+enabled = true
+min_points = 100
+
+[hf_models]
+enabled = true
+limit = 40
+max_age_days = 14
+# skip re-uploads / quantizations
+exclude_regex = "(?i)gguf|awq|gptq|mlx|exl2|fp8|int4|int8|bnb|quant|uncensored|abliterated|lora"
+
+[hf_papers]
+enabled = true
+limit = 25
+
+[github_trending]
+enabled = true
+limit = 25
