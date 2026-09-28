@@ -71,4 +71,10 @@ crontab -l | grep ml-news        # check schedule
   `prompts/curate.md` exist to prevent this — keep them when editing the prompt.
 - `claude -p` output with `--output-format json` puts the schema result in `structured_output`.
 - Cron only fires if the machine is on at that time (no catch-up). A run takes ~1–3 min.
+- **Robotics is structurally under-signaled**: global HF trending / HN / HF papers are LLM-dominated, so robotics
+  releases (e.g. BFL FLUX 3 Action, 2026-09-22) were missed entirely. Fixes that must stay: `[hf_models_robotics]`
+  (HF `pipeline_tag=robotics`), `[alphaxiv_topics]` (alphaXiv `topics=["cs.RO"]`, 7-day views), robotics RSS
+  (NVIDIA Robotics, TRI, BAIR, r/robotics), and the "judge hotness WITHIN each field" rule in `prompts/curate.md`.
+  Physical Intelligence's blog RSS returns 429 to scripts — not included.
+- Testing a full day after today's email was already sent: `python3 -m mlnews --dry-run --since-hours 24`.
 - The reference deployment lives on an NTFS (fuseblk) mount with no exec bits → scripts are always invoked as `bash scripts/...`.

@@ -18,7 +18,7 @@ Hacker News, Reddit, GitHub trending, and newsletters. Then Claude drops the noi
 | Labs (official) | OpenAI, Anthropic*, Google DeepMind, Google Research, Meta AI*, Qwen, Hugging Face blog |
 | Community signal | Hacker News (≥100 pts), r/LocalLLaMA, r/MachineLearning, HF trending models, HF daily papers, GitHub trending |
 | Social | Bluesky (free public API), X (optional, official pay-per-use API, ~$15/mo at the default cap) |
-| Robotics | The Robot Report, IEEE Spectrum Robotics |
+| Robotics | HF trending robotics models, most-viewed cs.RO papers (alphaXiv), NVIDIA Robotics, Toyota Research Institute, BAIR, r/robotics, The Robot Report, IEEE Spectrum Robotics |
 | Newsletters | Latent Space + AINews (daily X/Reddit/Discord recap), Simon Willison, Import AI, Ahead of AI, The Decoder |
 | arXiv | Top-5 most-viewed papers of the last 3 / 7 / 30 days (alphaXiv views) with a one-line core message each |
 | Catch-all | Claude runs a few web searches (per field, including x.com / LinkedIn) for major releases the feeds missed |

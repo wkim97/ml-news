@@ -112,6 +112,30 @@ url = "https://spectrum.ieee.org/feeds/topic/robotics.rss"
 kind = "newsletter"
 max_items = 10
 
+[[rss]]
+name = "NVIDIA Robotics"
+url = "https://blogs.nvidia.com/blog/category/robotics/feed/"
+kind = "lab"
+max_items = 8
+
+[[rss]]
+name = "Toyota Research Institute"
+url = "https://medium.com/feed/toyotaresearch"
+kind = "lab"
+max_items = 5
+
+[[rss]]
+name = "BAIR Blog"
+url = "https://bair.berkeley.edu/blog/feed.xml"
+kind = "lab"
+max_items = 5
+
+[[rss]]
+name = "r/robotics"
+url = "https://www.reddit.com/r/robotics/top/.rss?t=day"
+kind = "community"
+max_items = 10
+
 [hackernews]
 enabled = true
 min_points = 100
@@ -122,6 +146,22 @@ limit = 40
 max_age_days = 14
 # skip re-uploads / quantizations
 exclude_regex = "(?i)gguf|awq|gptq|mlx|exl2|fp8|int4|int8|bnb|quant|uncensored|abliterated|lora"
+
+[hf_models_robotics]
+# Robotics models never reach the global HF trending list (LLMs dominate) → query the robotics task tag directly.
+enabled = true
+pipeline_tag = "robotics"
+label = "HF Trending Robotics"
+limit = 15
+max_age_days = 30
+exclude_regex = "(?i)gguf|awq|gptq|mlx|exl2|quant|lora"
+
+[alphaxiv_topics]
+# Most-viewed recent arXiv papers per category, fed to the curator as candidates for under-covered fields.
+enabled = true
+categories = ["cs.RO"]
+interval = "7 Days"
+limit = 10
 
 [hf_papers]
 enabled = true

@@ -40,6 +40,9 @@ Hard rules:
   "robotics" = embodied AI, VLA, manipulation, locomotion, sim-to-real, robot hardware that matters for research;
   "general" = frontier general-purpose models, training/optimization, architectures, theory, infra/hardware, eval, safety, industry.
   Cover all four fields when there is something genuinely notable in each; never pad a field to fill it.
+  Judge hotness WITHIN each field: robotics (and often vision) items have much smaller community numbers than LLM news
+  (e.g. HF robotics trending ~100 vs LLM ~2000, alphaXiv cs.RO views in the tens–hundreds). A robotics release from a
+  major lab or a top-viewed cs.RO paper is hot for robotics even if its absolute numbers look small.
 - category: "release" = models/products/APIs; "paper" = research; "tool" = open-source repos/datasets/benchmarks;
   "industry" = major moves that affect research.
 - must_read: true for the 0–3 things the reader must not miss today (any field). Everything else false.

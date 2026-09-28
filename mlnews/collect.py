@@ -134,7 +134,10 @@ def hackernews(cfg: dict, since: datetime) -> list[dict]:
 
 
 def hf_models(cfg: dict, since: datetime) -> list[dict]:
-    data = json.loads(fetch(f"https://huggingface.co/api/models?sort=trendingScore&limit={cfg.get('limit', 40)}"))
+    q = {"sort": "trendingScore", "limit": cfg.get("limit", 40)}
+    if cfg.get("pipeline_tag"):
+        q["pipeline_tag"] = cfg["pipeline_tag"]
+    data = json.loads(fetch("https://huggingface.co/api/models?" + urllib.parse.urlencode(q)))
     exclude = re.compile(cfg.get("exclude_regex", "$^"))
     cutoff = datetime.now(timezone.utc) - timedelta(days=cfg.get("max_age_days", 14))
     out = []
@@ -143,7 +146,7 @@ def hf_models(cfg: dict, since: datetime) -> list[dict]:
         if exclude.search(m["id"]) or (created and created < cutoff):
             continue
         out.append({
-            "source": "HF Trending Models",
+            "source": cfg.get("label", "HF Trending Models"),
             "kind": "community",
             "title": m["id"],
             "url": f"https://huggingface.co/{m['id']}",
@@ -199,6 +202,8 @@ def collect_all(cfg: dict, since: datetime) -> tuple[list[dict], dict]:
     jobs = [(s["name"], rss, s) for s in cfg.get("rss", [])]
     for key, fn, label in [("hackernews", hackernews, "Hacker News"),
                            ("hf_models", hf_models, "HF Trending Models"),
+                           ("hf_models_robotics", hf_models, "HF Trending Robotics"),
+                           ("alphaxiv_topics", alphaxiv_topics, "alphaXiv per-field"),
                            ("hf_papers", hf_papers, "HF Daily Papers"),
                            ("github_trending", github_trending, "GitHub Trending"),
                            ("bluesky", bluesky, "Bluesky"),
@@ -315,5 +320,29 @@ def x_api(cfg: dict, since: datetime) -> list[dict]:
                 "summary": "",
                 "extra": {"by": name, "likes": m.get("like_count"), "reposts": m.get("retweet_count"),
                           "link": links[0] if links else None},
+            })
+    return out
+
+
+def alphaxiv_topics(cfg: dict, since: datetime) -> list[dict]:
+    """Most-viewed recent arXiv papers per category (e.g. cs.RO) — fields that never top the global charts."""
+    out = []
+    for cat in cfg.get("categories", []):
+        q = urllib.parse.urlencode({"sort": "Views", "interval": cfg.get("interval", "3 Days"), "pageNum": 0,
+                                    "pageSize": cfg.get("limit", 10), "topics": json.dumps([cat])})
+        for p in json.loads(fetch(f"https://api.alphaxiv.org/papers/v3/feed?{q}", timeout=60))["papers"]:
+            pid = p.get("universal_paper_id", "")
+            if not re.match(r"^\d{4}\.\d{4,5}$", pid):
+                continue
+            visits = (p.get("metrics") or {}).get("visits_count") or {}
+            out.append({
+                "source": f"alphaXiv {cat}",
+                "kind": "community",
+                "title": clean(p.get("title"), 200),
+                "url": f"https://arxiv.org/abs/{pid}",
+                "published": p.get("first_publication_date", ""),
+                "summary": clean(p.get("feed_description") or p.get("abstract"), 350),
+                "extra": {"views_7d": visits.get("last_7_days"), "votes": p.get("public_total_votes") or
+                          (p.get("metrics") or {}).get("public_total_votes")},
             })
     return out

@@ -43,6 +43,7 @@ def main() -> int:
     ap.add_argument("--dry-run", action="store_true", help="don't send email; write runs/<date>/digest.html")
     ap.add_argument("--force", action="store_true", help="run even if today's digest was already sent")
     ap.add_argument("--no-curate", action="store_true", help="skip Claude; use raw fallback digest")
+    ap.add_argument("--since-hours", type=float, help="override the collection window in hours (e.g. to resend a full day)")
     args = ap.parse_args()
 
     load_env()
@@ -64,7 +65,9 @@ def main() -> int:
     run_dir = RUNS_DIR / now.strftime("%Y-%m-%d")
     run_dir.mkdir(parents=True, exist_ok=True)
     try:
-        if last:
+        if args.since_hours:
+            since = now - timedelta(hours=args.since_hours)
+        elif last:
             since = max(now - timedelta(hours=MAX_WINDOW_H), last - timedelta(hours=3))
         else:
             since = now - timedelta(hours=cfg["digest"].get("lookback_hours", 36))
