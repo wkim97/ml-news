@@ -19,7 +19,7 @@ Hacker News, Reddit, GitHub trending, and newsletters. Then Claude drops the noi
 | Community signal | Hacker News (≥100 pts), r/LocalLLaMA, r/MachineLearning, HF trending models, HF daily papers, GitHub trending |
 | Social | Bluesky (free public API), X (optional, official pay-per-use API, ~$15/mo at the default cap) |
 | Robotics | The Robot Report, IEEE Spectrum Robotics |
-| Newsletters | AI News (smol.ai, X/Discord recap), Simon Willison, Import AI, Latent Space, Ahead of AI, The Decoder |
+| Newsletters | Latent Space + AINews (daily X/Reddit/Discord recap), Simon Willison, Import AI, Ahead of AI, The Decoder |
 | Catch-all | Claude runs a few web searches (per field, including x.com / LinkedIn) for major releases the feeds missed |
 
 \* community-maintained RSS mirrors. All sources are configurable in `config.toml`.

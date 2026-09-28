@@ -63,12 +63,6 @@ url = "https://huggingface.co/blog/feed.xml"
 kind = "lab"
 
 [[rss]]
-name = "AI News (smol.ai)"   # daily recap of X/Twitter + Reddit + Discord — our proxy for X
-url = "https://news.smol.ai/rss.xml"
-kind = "newsletter"
-content_chars = 6000
-
-[[rss]]
 name = "Simon Willison"
 url = "https://simonwillison.net/atom/everything/"
 kind = "newsletter"
@@ -79,9 +73,10 @@ url = "https://importai.substack.com/feed"
 kind = "newsletter"
 
 [[rss]]
-name = "Latent Space"
+name = "Latent Space / AINews"   # includes the daily [AINews] recap of X/Reddit/Discord (moved here from news.smol.ai in 2026-09) — our main X proxy
 url = "https://www.latent.space/feed"
 kind = "newsletter"
+content_chars = 5000
 
 [[rss]]
 name = "Ahead of AI (Raschka)"

@@ -86,7 +86,7 @@ def curate(cfg: dict, prompt: str) -> tuple[dict, dict]:
         "--strict-mcp-config",  # no MCP servers: curator only needs web tools
     ]
     if c.get("allow_web", True):
-        cmd += ["--allowedTools", "WebSearch,WebFetch"]
+        cmd += ["--allowedTools", c.get("allowed_tools", "WebSearch,WebFetch")]
     if c.get("model"):
         cmd += ["--model", c["model"]]
     proc = subprocess.run(cmd, input=prompt, capture_output=True, text=True,

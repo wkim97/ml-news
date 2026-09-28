@@ -50,7 +50,11 @@ crontab -l | grep ml-news        # check schedule
   sweep looks at x.com / linkedin.com instead.
 - **Bluesky** handles in `config.toml` were verified active in 2026-09; many well-known ML people have left or never joined.
   Dead handles are logged and skipped. arXiv bot accounts (arxiv-cs-*.bsky.social) are too noisy — don't add them.
-- smol.ai AI News (X/Reddit/Discord recap) had no new issue after 2026-09-09; kept in case it resumes.
+- The daily AINews recap (X/Reddit/Discord) moved from news.smol.ai to the Latent Space feed around 2026-09 — the smol.ai
+  feed is stale and was removed. Latent Space gets a large `content_chars` because AINews is our best X proxy.
+- Backtest lesson (Jev, launched 2026-09-15 by an unknown startup, HN 1984 pts): it WAS collected but the curator
+  demoted it to radar (vague title + unfamiliar name + came with a funding round). The "Outliers" rules in
+  `prompts/curate.md` exist to prevent this — keep them when editing the prompt.
 - `claude -p` output with `--output-format json` puts the schema result in `structured_output`.
 - Cron only fires if the machine is on at that time (no catch-up). A run takes ~1–3 min.
 - The reference deployment lives on an NTFS (fuseblk) mount with no exec bits → scripts are always invoked as `bash scripts/...`.
