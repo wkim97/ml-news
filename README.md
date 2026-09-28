@@ -20,6 +20,7 @@ Hacker News, Reddit, GitHub trending, and newsletters. Then Claude drops the noi
 | Social | Bluesky (free public API), X (optional, official pay-per-use API, ~$15/mo at the default cap) |
 | Robotics | The Robot Report, IEEE Spectrum Robotics |
 | Newsletters | Latent Space + AINews (daily X/Reddit/Discord recap), Simon Willison, Import AI, Ahead of AI, The Decoder |
+| arXiv | Top-5 most-viewed papers of the last 3 / 7 / 30 days (alphaXiv views) with a one-line core message each |
 | Catch-all | Claude runs a few web searches (per field, including x.com / LinkedIn) for major releases the feeds missed |
 
 \* community-maintained RSS mirrors. All sources are configurable in `config.toml`.

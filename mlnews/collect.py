@@ -25,17 +25,21 @@ def log(msg: str) -> None:
     print(f"[collect] {msg}", file=sys.stderr, flush=True)
 
 
-def fetch(url: str, retries: int = 3) -> bytes:
+def fetch(url: str, retries: int = 3, timeout: int = TIMEOUT) -> bytes:
     req = urllib.request.Request(url, headers={"User-Agent": UA})
     for attempt in range(retries):
         try:
-            with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
                 data = r.read()
             # some servers (e.g. deepmind.google) send gzip without Content-Encoding
             return gzip.decompress(data) if data[:2] == b"\x1f\x8b" else data
         except urllib.error.HTTPError as e:
             if e.code in (429, 503) and attempt < retries - 1:
                 time.sleep(10 * (attempt + 1))
+                continue
+            raise
+        except TimeoutError:
+            if attempt < retries - 1:
                 continue
             raise
     raise RuntimeError("unreachable")

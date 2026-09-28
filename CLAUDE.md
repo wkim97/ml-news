@@ -13,12 +13,24 @@ always-on Linux box; nothing needs to stay open.
    Uses the logged-in Claude subscription (no API key). Output is validated against `SCHEMA`.
    Each item has `field` ∈ {vision, nlp, robotics, general}, `category` ∈ {release, paper, tool, industry}, `must_read`.
    On failure → `fallback_digest()` (raw top items) so the day is not lost.
+3b. **arXiv** (`mlnews/arxiv.py`, runs concurrently with curate) — top-5 most-viewed arXiv papers for the last
+   3 / 7 / 30 days from alphaXiv (`api.alphaxiv.org/papers/v3/feed?sort=Views&interval=N Days`; arXiv has no view
+   counts) + one Claude call writing a core message per paper. Only real arXiv ids tagged with a configured ML
+   category are kept (alphaXiv also hosts non-arXiv reports with slug ids, and physics papers leak in otherwise).
+   Optional `trend_enabled` (OFF): map-reduce over ALL abstracts of the daily mailing — measured 2026-09-28:
+   548 papers → ~1.0M input / 145k output tokens, ~7 min (map calls re-send the whole chunk every turn). Off by user decision.
 4. **render** (`mlnews/render.py`) — HTML with inline CSS only (Gmail strips `<style>`), plus plaintext part.
-   Layout: headline + TL;DR → 🔥 must-read → 👁 Vision / 💬 NLP / 🤖 Robotics / 🧠 General ML (items, then radar one-liners).
+   Layout: headline + TL;DR → 🔥 must-read → 👁 Vision / 💬 NLP / 🤖 Robotics / 🧠 General ML (items, then radar one-liners)
+   → 📈 arXiv top-5 for 3d / 7d / 30d (a paper already shown in a fresher window becomes a compact line).
 5. **send** (`mlnews/send.py`) — Gmail SMTP_SSL with an App Password from `.env`.
 6. **state** — `state/last_success.json` guards against double-sending the same day (override: `--force`).
 
-Every run keeps `runs/YYYY-MM-DD/{candidates.json,prompt.md,digest.json,digest.html}` — look there first when debugging.
+Every run keeps `runs/YYYY-MM-DD/{candidates.json,prompt.md,digest.json,digest.html,usage.json}` — look there first when
+debugging. `usage.json` has per-Claude-call model, seconds, input/output tokens and API-equivalent cost.
+Typical run (2026-09-28, trend off): 2 calls, ~100 s, ~205k input / 13k output tokens.
+
+**Models**: every Claude call is pinned to `claude-opus-5-5` in `config.toml` (user decision) — don't switch to
+aliases like "sonnet"/"opus" or leave them empty, since the CLI default can change underneath.
 Logs: `logs/YYYY-MM.log`.
 
 ## Where to change things

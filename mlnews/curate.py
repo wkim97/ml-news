@@ -3,6 +3,7 @@ import json
 import shutil
 import subprocess
 import sys
+import threading
 
 from .config import ROOT
 
@@ -72,33 +73,54 @@ def build_prompt(cfg: dict, candidates: list[dict], history: list[str], window: 
     )
 
 
-def curate(cfg: dict, prompt: str) -> tuple[dict, dict]:
-    """Returns (digest, meta). Raises on failure."""
-    c = cfg.get("curate", {})
+USAGE: list[dict] = []  # one entry per claude call in this process → runs/<date>/usage.json
+_usage_lock = threading.Lock()
+
+
+def run_claude(prompt: str, schema: dict, *, model: str = "", tools: str | None = None,
+               timeout: int = 1200, label: str = "claude") -> tuple[dict, dict]:
+    """One headless `claude -p` call with schema-constrained output. Returns (result, meta).
+
+    tools=None → no tools at all; otherwise a comma-separated allowlist (e.g. "WebSearch,WebFetch").
+    """
     claude = shutil.which("claude")
     if not claude:
         raise RuntimeError("`claude` CLI not found on PATH")
     cmd = [
         claude, "-p",
         "--output-format", "json",
-        "--json-schema", json.dumps(SCHEMA),
+        "--json-schema", json.dumps(schema),
         "--no-session-persistence",
-        "--strict-mcp-config",  # no MCP servers: curator only needs web tools
+        "--strict-mcp-config",  # no MCP servers needed
     ]
-    if c.get("allow_web", True):
-        cmd += ["--allowedTools", c.get("allowed_tools", "WebSearch,WebFetch")]
-    if c.get("model"):
-        cmd += ["--model", c["model"]]
-    proc = subprocess.run(cmd, input=prompt, capture_output=True, text=True,
-                          timeout=c.get("timeout_sec", 1200), cwd=ROOT)
+    cmd += ["--allowedTools", tools] if tools else ["--tools", ""]
+    if model:
+        cmd += ["--model", model]
+    proc = subprocess.run(cmd, input=prompt, capture_output=True, text=True, timeout=timeout, cwd=ROOT)
     if proc.returncode != 0:
         raise RuntimeError(f"claude exited {proc.returncode}: {proc.stderr[-2000:] or proc.stdout[-2000:]}")
     out = json.loads(proc.stdout)
     if out.get("is_error"):
         raise RuntimeError(f"claude error: {out.get('result')}")
-    digest = out.get("structured_output")
-    if digest is None:  # fall back to parsing the text result
-        digest = json.loads(out.get("result", ""))
+    result = out.get("structured_output")
+    if result is None:  # fall back to parsing the text result
+        result = json.loads(out.get("result", ""))
+    u = out.get("usage") or {}
     meta = {k: out.get(k) for k in ("total_cost_usd", "duration_ms", "num_turns", "session_id")}
-    print(f"[curate] {meta}", file=sys.stderr, flush=True)
-    return digest, meta
+    meta.update(label=label, model=model or "default",
+                input_tokens=u.get("input_tokens", 0) + u.get("cache_creation_input_tokens", 0)
+                + u.get("cache_read_input_tokens", 0),
+                output_tokens=u.get("output_tokens", 0))
+    with _usage_lock:
+        USAGE.append(meta)
+    print(f"[{label}] {meta['duration_ms'] / 1000:.0f}s, in {meta['input_tokens']:,} / out {meta['output_tokens']:,} tok, "
+          f"{meta['num_turns']} turns", file=sys.stderr, flush=True)
+    return result, meta
+
+
+def curate(cfg: dict, prompt: str) -> tuple[dict, dict]:
+    """Returns (digest, meta). Raises on failure."""
+    c = cfg.get("curate", {})
+    tools = c.get("allowed_tools", "WebSearch,WebFetch") if c.get("allow_web", True) else None
+    return run_claude(prompt, SCHEMA, model=c.get("model", ""), tools=tools,
+                      timeout=c.get("timeout_sec", 1200), label="curate")

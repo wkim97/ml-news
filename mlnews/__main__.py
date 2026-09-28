@@ -10,10 +10,12 @@ import sys
 import traceback
 from datetime import datetime, timedelta
 
-from . import state
+from concurrent.futures import ThreadPoolExecutor
+
+from . import arxiv, state
 from .collect import collect_all
 from .config import RUNS_DIR, STATE_DIR, load_config, load_env
-from .curate import build_prompt, curate
+from .curate import USAGE, build_prompt, curate
 from .render import subject, to_html, to_text
 from .send import send_email
 
@@ -75,6 +77,14 @@ def main() -> int:
         (run_dir / "candidates.json").write_text(json.dumps(candidates, ensure_ascii=False, indent=1))
         print(f"[main] {len(candidates)} candidates", file=sys.stderr, flush=True)
 
+        # news curation and the arXiv section are independent Claude jobs → run them concurrently
+        ax_cfg = cfg.get("arxiv", {})
+        pool = ThreadPoolExecutor(max_workers=2)
+        ax_future = None
+        if ax_cfg.get("enabled", True) and not args.no_curate:
+            ax_future = pool.submit(arxiv.arxiv_section, ax_cfg, cfg["profile"]["description"].strip(),
+                                    cfg["profile"].get("language", "English"), arxiv.load_state())
+
         meta, digest = {}, None
         if not args.no_curate:
             prompt = build_prompt(cfg, candidates, state.recent_titles(), window)
@@ -86,9 +96,17 @@ def main() -> int:
                 digest = fallback_digest(candidates, str(e))
         else:
             digest = fallback_digest(candidates, "--no-curate")
+        ax = ax_future.result() if ax_future else None
+        pool.shutdown()
+        if ax:
+            digest["arxiv"] = ax
         (run_dir / "digest.json").write_text(json.dumps(digest, ensure_ascii=False, indent=1))
+        (run_dir / "usage.json").write_text(json.dumps(USAGE, indent=1))
+        tok_in = sum(u["input_tokens"] for u in USAGE)
+        tok_out = sum(u["output_tokens"] for u in USAGE)
+        print(f"[main] claude: {len(USAGE)} calls, in {tok_in:,} / out {tok_out:,} tokens", file=sys.stderr, flush=True)
 
-        failed = [k for k, v in status.items() if isinstance(v, str)]
+        failed = [k for k, v in status.items() if isinstance(v, str)] + (["arXiv"] if ax and ax["errors"] else [])
         footer = (f"{len(candidates)} candidates from {len(status) - len(failed)}/{len(status)} sources"
                   + (f" · failed: {', '.join(failed)}" if failed else "")
                   + (f" · {meta.get('num_turns')} turns, {(meta.get('duration_ms') or 0) / 1000:.0f}s" if meta else ""))
@@ -103,6 +121,8 @@ def main() -> int:
             return 0
         send_email(subj, html, text)
         state.record_sent(digest, now)
+        if ax:
+            arxiv.record(ax)
         print("[main] sent", file=sys.stderr)
         return 0
     except Exception:
