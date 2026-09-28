@@ -3,10 +3,11 @@
 [profile]
 # Who the digest is for. The curator uses this to decide what is "hot" and what it means.
 description = """
-PhD researcher in AI/ML, with focus on computer vision and NLP.
+PhD researcher in AI/ML. Follows four fields: Vision (CV, multimodal, image/video/3D generation),
+NLP (LLMs, reasoning, agents, language), Robotics (embodied AI, VLA, manipulation, locomotion, sim),
+and General ML (training/optimization, architectures, theory, infra, eval, safety).
 Wants: frontier model releases (closed & open weights), major new architectures / training methods,
-influential papers (esp. CV, multimodal, LLM, generative models), important open-source tools/datasets,
-and big industry moves that change the research landscape.
+influential papers, important open-source tools/datasets, and big industry moves that change the research landscape.
 Does NOT want: funding rounds, product marketing fluff, opinion pieces, tutorials, AI-policy chatter
 (unless it materially affects research), minor version bumps, quantized re-uploads, crypto/AI hype.
 """
@@ -14,8 +15,8 @@ language = "Korean"          # language of the digest text (titles/links stay or
 
 [digest]
 lookback_hours = 36          # candidate window when there is no previous successful run
-max_items = 10               # hard cap on main items (radar excluded)
-max_radar = 6                # one-liners for "worth a glance"
+max_items = 12               # hard cap on main items across all fields (radar excluded)
+max_radar = 8                # one-liners for "worth a glance", spread across fields
 subject_prefix = "[ML News]"
 
 [curate]
@@ -104,6 +105,18 @@ url = "https://www.reddit.com/r/MachineLearning/top/.rss?t=day"
 kind = "community"
 max_items = 10
 
+[[rss]]
+name = "The Robot Report"
+url = "https://www.therobotreport.com/feed/"
+kind = "newsletter"
+max_items = 10
+
+[[rss]]
+name = "IEEE Spectrum Robotics"
+url = "https://spectrum.ieee.org/feeds/topic/robotics.rss"
+kind = "newsletter"
+max_items = 10
+
 [hackernews]
 enabled = true
 min_points = 100
@@ -122,3 +135,32 @@ limit = 25
 [github_trending]
 enabled = true
 limit = 25
+
+[bluesky]
+# Public API, no auth. Only accounts verified active as of 2026-09. Add more handles freely.
+enabled = true
+accounts = [
+  "hardmaru.bsky.social",        # David Ha
+  "natolambert.bsky.social",     # Nathan Lambert (post-training, open models)
+  "eugenevinitsky.bsky.social",  # RL / robotics
+  "ducha-aiki.bsky.social",      # Dmytro Mishkin (CV papers)
+  "tdietterich.bsky.social",     # arXiv cs.LG moderator
+  "mmitchell.bsky.social",
+  "ai2.bsky.social",
+  "neuripsconf.bsky.social",
+  "simonwillison.net",
+]
+
+[x]
+# Official X API, pay-per-use (~$0.005 per post read, no free tier as of 2026-09).
+# Active ONLY when X_BEARER_TOKEN is set in .env. max_reads caps posts read per run (= cost cap).
+max_reads = 100                  # ≈ $0.50/run ≈ $15/month
+accounts = [
+  # labs
+  "OpenAI", "AnthropicAI", "GoogleDeepMind", "GoogleAI", "AIatMeta", "MistralAI", "Alibaba_Qwen",
+  "deepseek_ai", "xai", "NVIDIAAI", "huggingface", "allen_ai", "physical_int", "Figure_robot",
+  # people / curators
+  "karpathy", "sama", "_akhaliq", "ylecun", "DrJimFan", "hardmaru", "rasbt", "natolambert",
+  "JeffDean", "OriolVinyalsML", "fchollet", "sainingxie", "jbhuang0604", "chelseabfinn",
+  "svlevine", "pabbeel", "arankomatsuzaki", "ArtificialAnlys", "lmarena_ai", "ClementDelangue",
+]

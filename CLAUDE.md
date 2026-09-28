@@ -6,13 +6,15 @@ always-on Linux box; nothing needs to stay open.
 
 ## Pipeline (`python -m mlnews`)
 1. **collect** (`mlnews/collect.py`, stdlib only) — RSS/Atom feeds + HN Algolia + HF trending models +
-   HF daily papers + GitHub trending. Window = since last successful run (−3h overlap, max 72h), else `lookback_hours`.
+   HF daily papers + GitHub trending + Bluesky (public API) + X (official API, only if `X_BEARER_TOKEN` is set). Window = since last successful run (−3h overlap, max 72h), else `lookback_hours`.
    A failing source is logged and skipped; it never kills the run.
 2. **dedupe** — drop URLs sent in the last 14 days (`state/sent.jsonl`); last 7 days of titles go to the prompt as "already sent".
 3. **curate** (`mlnews/curate.py` + `prompts/curate.md`) — `claude -p --json-schema ... --allowedTools WebSearch,WebFetch --strict-mcp-config`.
    Uses the logged-in Claude subscription (no API key). Output is validated against `SCHEMA`.
+   Each item has `field` ∈ {vision, nlp, robotics, general}, `category` ∈ {release, paper, tool, industry}, `must_read`.
    On failure → `fallback_digest()` (raw top items) so the day is not lost.
 4. **render** (`mlnews/render.py`) — HTML with inline CSS only (Gmail strips `<style>`), plus plaintext part.
+   Layout: headline + TL;DR → 🔥 must-read → 👁 Vision / 💬 NLP / 🤖 Robotics / 🧠 General ML (items, then radar one-liners).
 5. **send** (`mlnews/send.py`) — Gmail SMTP_SSL with an App Password from `.env`.
 6. **state** — `state/last_success.json` guards against double-sending the same day (override: `--force`).
 
@@ -22,7 +24,7 @@ Logs: `logs/YYYY-MM.log`.
 ## Where to change things
 - **Sources / reader profile / limits / model** → `config.toml` (committed). Add a feed with an `[[rss]]` block.
 - **Selection criteria, tone, length limits** → `prompts/curate.md`. Placeholders are `str.format` fields — escape literal braces as `{{ }}`.
-- **Output shape** → `SCHEMA` in `curate.py` *and* `render.py` together.
+- **Output shape / fields** → `SCHEMA`+`FIELDS` in `curate.py` *and* `FIELDS` in `render.py` together, plus the field definitions in `prompts/curate.md`.
 - **Secrets** → `.env` only (gitignored). See `.env.example`. Never put credentials in `config.toml` or commit `.env`.
 
 ## Commands
@@ -41,7 +43,14 @@ crontab -l | grep ml-news        # check schedule
 - Reddit `.json` endpoints return 403 for anonymous clients → use `/top/.rss?t=day`. Reddit also 429s parallel
   requests, so reddit feeds are fetched serially behind a lock with retry. Occasional 429 is expected and non-fatal.
 - Anthropic and Meta AI have no official RSS — we use community mirrors (`Olshansk/rss-feeds`).
-- There is no free X/Twitter feed. Proxies: smol.ai AI News (recaps X/Reddit/Discord; may go stale) + the curator's WebSearch sweep.
+- **X**: no free access as of 2026-09 (nitter instances dead, `syndication.twitter.com` rate-limits after 1 request).
+  Official API is pay-per-use (~$0.005/post read, no free tier) → `x_api()` is opt-in via `X_BEARER_TOKEN`;
+  `[x].max_reads` is the per-run cost cap. API v2 search has no `min_faves`, so popularity is filtered by the curator.
+- **LinkedIn**: no public read API and scraping violates ToS → intentionally not collected; the curator's WebSearch
+  sweep looks at x.com / linkedin.com instead.
+- **Bluesky** handles in `config.toml` were verified active in 2026-09; many well-known ML people have left or never joined.
+  Dead handles are logged and skipped. arXiv bot accounts (arxiv-cs-*.bsky.social) are too noisy — don't add them.
+- smol.ai AI News (X/Reddit/Discord recap) had no new issue after 2026-09-09; kept in case it resumes.
 - `claude -p` output with `--output-format json` puts the schema result in `structured_output`.
 - Cron only fires if the machine is on at that time (no catch-up). A run takes ~1–3 min.
 - The reference deployment lives on an NTFS (fuseblk) mount with no exec bits → scripts are always invoked as `bash scripts/...`.

@@ -6,6 +6,8 @@ import sys
 
 from .config import ROOT
 
+FIELDS = ["vision", "nlp", "robotics", "general"]
+
 SCHEMA = {
     "type": "object",
     "required": ["headline", "tldr", "items", "radar"],
@@ -17,10 +19,12 @@ SCHEMA = {
             "type": "array",
             "items": {
                 "type": "object",
-                "required": ["category", "title", "what", "why", "links"],
+                "required": ["field", "category", "must_read", "title", "what", "why", "links"],
                 "additionalProperties": False,
                 "properties": {
-                    "category": {"type": "string", "enum": ["big", "release", "paper", "tool", "industry"]},
+                    "field": {"type": "string", "enum": FIELDS},
+                    "category": {"type": "string", "enum": ["release", "paper", "tool", "industry"]},
+                    "must_read": {"type": "boolean"},
                     "title": {"type": "string"},
                     "what": {"type": "string"},
                     "why": {"type": "string"},
@@ -37,8 +41,9 @@ SCHEMA = {
         "radar": {
             "type": "array",
             "items": {
-                "type": "object", "required": ["title", "url"], "additionalProperties": False,
-                "properties": {"title": {"type": "string"}, "url": {"type": "string"}},
+                "type": "object", "required": ["field", "title", "url"], "additionalProperties": False,
+                "properties": {"field": {"type": "string", "enum": FIELDS},
+                               "title": {"type": "string"}, "url": {"type": "string"}},
             },
         },
     },
@@ -49,8 +54,9 @@ def build_prompt(cfg: dict, candidates: list[dict], history: list[str], window: 
     d, c = cfg["digest"], cfg.get("curate", {})
     web_rule = (
         "You MAY use WebSearch/WebFetch (budget: ~8 calls) to (a) verify/enrich a top item with its primary source, "
-        "and (b) run 2–3 searches for major AI releases/announcements in the last 24–36h that the candidates missed "
-        "(e.g. new frontier models announced on X). Include a missed item only if you found a primary source."
+        "and (b) run 3–4 searches for major releases/announcements in the last 24–36h that the candidates missed — "
+        "cover each field (vision / nlp / robotics / general ML), and include at least one search aimed at "
+        "what researchers are discussing on X (x.com) and LinkedIn. Include a missed item only if you found a primary source."
         if c.get("allow_web", True) else "Do not use any tools; work only from the candidates."
     )
     template = (ROOT / "prompts" / "curate.md").read_text()

@@ -26,8 +26,18 @@ Hard rules:
   (key number if it matters). `why`: ONE short sentence, the meaning for a researcher, ≤ 70 {language} characters.
   Noun-ending / 개조식 style is fine (e.g. "~ 공개", "~ 가능"). No filler, no hype adjectives, no restating the title.
   radar titles: ≤ 50 characters.
-- category: "big" = the 0–3 things the reader must not miss today; "release" = models/products/APIs;
-  "paper" = research; "tool" = open-source repos/datasets/benchmarks; "industry" = major moves that affect research.
+- field (one per item, pick the best fit):
+  "vision" = CV, multimodal/VLM, image/video/3D generation, world models from video;
+  "nlp" = LLMs, reasoning, agents, language, speech-as-language;
+  "robotics" = embodied AI, VLA, manipulation, locomotion, sim-to-real, robot hardware that matters for research;
+  "general" = frontier general-purpose models, training/optimization, architectures, theory, infra/hardware, eval, safety, industry.
+  Cover all four fields when there is something genuinely notable in each; never pad a field to fill it.
+- category: "release" = models/products/APIs; "paper" = research; "tool" = open-source repos/datasets/benchmarks;
+  "industry" = major moves that affect research.
+- must_read: true for the 0–3 things the reader must not miss today (any field). Everything else false.
+- radar: one-liners worth a glance, each tagged with a field.
+- Social posts (X, Bluesky) are signals, not sources: when a post points to a release/paper, link the primary source first
+  and the post second.
 - headline: ≤ 30 characters (in {language}), used as the email subject. tldr: up to 3 bullets, each ≤ 40 characters (in {language}).
 
 ## Already sent in recent days (do not repeat unless there is substantial new development)

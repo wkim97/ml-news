@@ -196,7 +196,11 @@ def collect_all(cfg: dict, since: datetime) -> tuple[list[dict], dict]:
     for key, fn, label in [("hackernews", hackernews, "Hacker News"),
                            ("hf_models", hf_models, "HF Trending Models"),
                            ("hf_papers", hf_papers, "HF Daily Papers"),
-                           ("github_trending", github_trending, "GitHub Trending")]:
+                           ("github_trending", github_trending, "GitHub Trending"),
+                           ("bluesky", bluesky, "Bluesky"),
+                           ("x", x_api, "X")]:
+        if key == "x" and not __import__("os").environ.get("X_BEARER_TOKEN", "").strip():
+            continue
         if cfg.get(key, {}).get("enabled", True):
             jobs.append((label, fn, cfg.get(key, {})))
 
@@ -225,3 +229,87 @@ def collect_all(cfg: dict, since: datetime) -> tuple[list[dict], dict]:
             seen.add(key)
             uniq.append(it)
     return uniq, status
+
+
+def bluesky(cfg: dict, since: datetime) -> list[dict]:
+    """Posts + reposts (no replies) from followed accounts via the public AppView API (no auth)."""
+    out = []
+    for handle in cfg.get("accounts", []):
+        q = urllib.parse.urlencode({"actor": handle, "limit": 30, "filter": "posts_no_replies"})
+        try:
+            feed = json.loads(fetch(f"https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?{q}"))["feed"]
+        except Exception as e:  # noqa: BLE001 — skip a dead handle, keep the rest
+            log(f"bluesky {handle}: {type(e).__name__}: {e}")
+            continue
+        for f in feed:
+            post = f["post"]
+            created = parse_date(post["record"].get("createdAt"))
+            if created and created < since:
+                continue
+            author = post["author"]["handle"]
+            embed = (post.get("embed") or {}).get("external") or {}
+            out.append({
+                "source": "Bluesky",
+                "kind": "community",
+                "title": clean(post["record"].get("text"), 280) or embed.get("title", ""),
+                "url": f"https://bsky.app/profile/{author}/post/{post['uri'].rsplit('/', 1)[-1]}",
+                "published": created.isoformat() if created else "",
+                "summary": clean(embed.get("title"), 200),
+                "extra": {"by": author, "reposted_by": handle if "reason" in f else None,
+                          "likes": post.get("likeCount"), "reposts": post.get("repostCount"),
+                          "link": embed.get("uri")},
+            })
+    return out
+
+
+def x_api(cfg: dict, since: datetime) -> list[dict]:
+    """Recent original posts from followed X accounts via the official API (pay-per-read).
+
+    Enabled only when X_BEARER_TOKEN is set. `max_reads` caps posts read per run = cost cap
+    (at $0.005/read, 100 reads ≈ $0.50/run).
+    """
+    import os
+    token = os.environ.get("X_BEARER_TOKEN", "").strip()
+    if not token:
+        return []
+    accounts, budget = cfg.get("accounts", []), cfg.get("max_reads", 100)
+    # recent search queries are limited to 512 chars → split the account list into chunks
+    chunks, cur = [], []
+    for a in accounts:
+        if len(" OR ".join(f"from:{x}" for x in cur + [a])) > 440:
+            chunks.append(cur)
+            cur = []
+        cur.append(a)
+    if cur:
+        chunks.append(cur)
+    per_chunk = max(10, budget // max(1, len(chunks)))
+    out = []
+    for chunk in chunks:
+        query = "(" + " OR ".join(f"from:{a}" for a in chunk) + ") -is:reply -is:retweet"
+        q = urllib.parse.urlencode({
+            "query": query, "max_results": min(100, per_chunk), "sort_order": "relevancy",
+            "start_time": since.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "tweet.fields": "created_at,public_metrics,author_id,entities",
+            "expansions": "author_id", "user.fields": "username",
+        })
+        req = urllib.request.Request(f"https://api.x.com/2/tweets/search/recent?{q}",
+                                     headers={"Authorization": f"Bearer {token}", "User-Agent": UA})
+        with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+            data = json.loads(r.read())
+        users = {u["id"]: u["username"] for u in data.get("includes", {}).get("users", [])}
+        for t in data.get("data", []):
+            name = users.get(t["author_id"], "i")
+            m = t.get("public_metrics", {})
+            links = [u.get("expanded_url") for u in (t.get("entities") or {}).get("urls", [])
+                     if "x.com" not in (u.get("expanded_url") or "")]
+            out.append({
+                "source": "X",
+                "kind": "community",
+                "title": clean(t["text"], 280),
+                "url": f"https://x.com/{name}/status/{t['id']}",
+                "published": t.get("created_at", ""),
+                "summary": "",
+                "extra": {"by": name, "likes": m.get("like_count"), "reposts": m.get("retweet_count"),
+                          "link": links[0] if links else None},
+            })
+    return out
