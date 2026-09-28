@@ -107,7 +107,7 @@ def run_claude(prompt: str, schema: dict, *, model: str = "", tools: str | None 
         result = json.loads(out.get("result", ""))
     u = out.get("usage") or {}
     meta = {k: out.get(k) for k in ("total_cost_usd", "duration_ms", "num_turns", "session_id")}
-    meta.update(label=label, model=model or "default",
+    meta.update(label=label, model=",".join((out.get("modelUsage") or {}).keys()) or model or "default",
                 input_tokens=u.get("input_tokens", 0) + u.get("cache_creation_input_tokens", 0)
                 + u.get("cache_read_input_tokens", 0),
                 output_tokens=u.get("output_tokens", 0))

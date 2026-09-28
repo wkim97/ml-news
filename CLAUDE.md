@@ -29,8 +29,10 @@ Every run keeps `runs/YYYY-MM-DD/{candidates.json,prompt.md,digest.json,digest.h
 debugging. `usage.json` has per-Claude-call model, seconds, input/output tokens and API-equivalent cost.
 Typical run (2026-09-28, trend off): 2 calls, ~100 s, ~205k input / 13k output tokens.
 
-**Models**: every Claude call is pinned to `claude-opus-5-5` in `config.toml` (user decision) — don't switch to
-aliases like "sonnet"/"opus" or leave them empty, since the CLI default can change underneath.
+**Models**: every Claude call uses the `opus` alias in `config.toml` = always the latest Opus (user decision,
+2026-09-28; resolved to `claude-opus-5-5` then). Don't pin a versioned id, switch to "sonnet", or leave it empty
+(empty = CLI default, which is not guaranteed to be Opus). `usage.json` records which model actually ran
+(calls with WebFetch also list a Haiku model — Claude Code uses it internally to digest fetched pages).
 Logs: `logs/YYYY-MM.log`.
 
 ## Where to change things

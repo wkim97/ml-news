@@ -138,7 +138,7 @@ def _map(cfg: dict, papers: list[dict]) -> list[dict]:
         body = "\n".join(json.dumps({k2: p[k2] for k2 in ("id", "title", "cats", "abstract")}, ensure_ascii=False)
                          for p in chunk)
         prompt = MAP_PROMPT.format(k=k + 1, n=len(chunks), m=len(chunk), papers=body)
-        res, _ = run_claude(prompt, MAP_SCHEMA, model=cfg.get("map_model", "claude-opus-5-5"),
+        res, _ = run_claude(prompt, MAP_SCHEMA, model=cfg.get("map_model", "opus"),
                             timeout=cfg.get("timeout_sec", 900), label=f"arxiv-map {k + 1}/{len(chunks)}")
         return res
 
@@ -216,7 +216,7 @@ def arxiv_section(cfg: dict, profile: str, language: str, last_state: dict) -> d
             body = "\n".join(json.dumps({"id": p["id"], "title": p["title"], "abstract": p["abstract"]},
                                         ensure_ascii=False) for p in uniq.values())
             res, _ = run_claude(MESSAGE_PROMPT.format(language=language, papers=body), MESSAGE_SCHEMA,
-                                model=cfg.get("message_model", "claude-opus-5-5"), timeout=cfg.get("timeout_sec", 900),
+                                model=cfg.get("message_model", "opus"), timeout=cfg.get("timeout_sec", 900),
                                 label="arxiv-top")
             msg = {x["id"]: x["message"] for x in res["papers"]}
             for w in sec["windows"]:
@@ -245,7 +245,7 @@ def arxiv_section(cfg: dict, profile: str, language: str, last_state: dict) -> d
                     cats=", ".join(cfg.get("categories", [])), max_trends=cfg.get("max_trends", 8),
                     history=_history(), clusters="\n".join(json.dumps(c, ensure_ascii=False) for c in clusters),
                     standouts="\n".join(json.dumps(s, ensure_ascii=False) for s in standouts) or "(none)")
-                sec["trend"], _ = run_claude(prompt, REDUCE_SCHEMA, model=cfg.get("reduce_model", "claude-opus-5-5"),
+                sec["trend"], _ = run_claude(prompt, REDUCE_SCHEMA, model=cfg.get("reduce_model", "opus"),
                                              timeout=cfg.get("timeout_sec", 900), label="arxiv-reduce")
         except Exception as e:  # noqa: BLE001
             sec["errors"].append(f"trend: {type(e).__name__}: {e}")

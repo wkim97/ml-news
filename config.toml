@@ -20,7 +20,7 @@ max_radar = 8                # one-liners for "worth a glance", spread across fi
 subject_prefix = "[ML News]"
 
 [curate]
-model = "claude-opus-5-5"      # pinned so a CLI default change does not silently switch models
+model = "opus"                 # alias = always the latest Opus
 timeout_sec = 1200
 allow_web = true             # let the curator WebSearch/WebFetch to verify & catch missed big news
 
@@ -167,14 +167,14 @@ categories = ["cs.LG", "cs.CV", "cs.CL", "cs.AI", "cs.RO", "stat.ML"]
 windows = [3, 7, 30]            # days; shown freshest first
 top_n = 5
 max_pages = 4                   # alphaXiv pages (×50) to scan per window until top_n ML papers are found
-message_model = "claude-opus-5-5"
+message_model = "opus"
 timeout_sec = 900
 # Trend summary over ALL abstracts of the daily mailing. OFF by default: ~1M tokens & ~7 min per run
 # (measured 2026-09-28, 548 papers). Set true to re-enable.
 trend_enabled = false
 chunk_size = 120
 parallel = 10
-map_model = "claude-opus-5-5"
-reduce_model = "claude-opus-5-5"
+map_model = "opus"
+reduce_model = "opus"
 max_trends = 8
 abstract_chars = 2000
